@@ -2,40 +2,13 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [color, setColor] = useState("");
-  const [randomColor1, setRandomColor1] = useState("");
-  const [randomColor2, setRandomColor2] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-  const [showResult, setShowResult] = useState(false);
-  const [shuffledColors, setShuffledColors] = useState([]);
-
-  useEffect(() => {
-    randomColor();
-  }, []);
-
-  useEffect(() => {
-    // This useEffect watches for changes to color, randomColor1, and randomColor2,
-    // ensuring shuffledColors is updated only when these colors change.
-    setShuffledColors(shuffle([color, randomColor1, randomColor2]));
-  }, [color, randomColor1, randomColor2]);
-
-  const onClick = (e) => {
-    setSelectedColor(e.target.value);
-    setShowResult(true); // setShowResult now explicitly set to true here.
-  };
-
-  useEffect(() => {
-    if (selectedColor === color) {
-      setTimeout(() => {
-        randomColor();
-      }, 1000);
-    }
-  }, [selectedColor,color]);
-
-  const shuffle = (array:[]) => {
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [isCorrect, setIsCorrect] = useState<boolean | undefined>(undefined);
+  const [showResult, setShowResult] = useState<boolean>(false);
+  const [color, setColor] = useState<string>("");
+  const shuffle = (array: string[]) => {
     let currentIndex = array.length,
       randomIndex;
-
     while (currentIndex !== 0) {
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
@@ -45,32 +18,55 @@ function App() {
         array[currentIndex],
       ];
     }
-
     return array;
   };
 
-  const randomColor = () => {
-    // Generate and set new colors.
-    setColor(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
-    setRandomColor1(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
-    setRandomColor2(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
-    setShowResult(false); // Reset the showResult state.
+  const generateColors = () => {
+    const randomColor = () => {
+      return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    };
+    const actualAnswer = randomColor();
+    setColor(actualAnswer);
+    setAnswers(shuffle([actualAnswer, randomColor(), randomColor()]));
+    setIsCorrect(false);
+    setShowResult(false);
+  };
+  useEffect(() => {
+    generateColors();
+  }, []);
+
+  const handleClick = (answer: string) => {
+    setShowResult(true);
+    if (answer === color) {
+      setIsCorrect(true);
+      setTimeout(() => {
+        generateColors();
+      }, 1000);
+    } else {
+      setIsCorrect(false);
+    }
   };
 
   return (
     <div className="App">
-      <div className="color-box" style={{ backgroundColor: color }}>
-        {color}
-      </div>
-      <div className="buttons">
-        {shuffledColors.map((color, index) => (
-          <button key={index} value={color} onClick={onClick}>
-            {color}
+      <div className="color-box" style={{ backgroundColor: color }}></div>
+      <div className="buttons"></div>
+      <div>
+        {answers.map((answer, index) => (
+          <button
+            className="button"
+            key={index}
+            onClick={() => handleClick(answer)}
+          >
+            {answer}
           </button>
         ))}
-      </div>
-      <div>
-        {showResult && <p>{selectedColor === color ? "Correct" : "Wrong"}</p>}
+        {showResult && (
+          <div className="result">
+            {isCorrect === true && <p>Correct</p>}
+            {isCorrect === false && <p>Wrong</p>}
+          </div>
+        )}
       </div>
     </div>
   );
